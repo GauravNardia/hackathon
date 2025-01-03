@@ -9,6 +9,9 @@ export async function POST(req: NextRequest) {
   const apiURL = `https://api.langflow.astra.datastax.com/lf/${langflowId}/api/v1/run/${flowId}?stream=false`;
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+
     const response = await fetch(apiURL, {
       method: "POST",
       headers: {
@@ -21,7 +24,11 @@ export async function POST(req: NextRequest) {
         output_type: "chat",
         tweaks: {},
       }),
+      signal: controller.signal, // Attach the AbortController
     });
+
+    clearTimeout(timeoutId); // Clear the timeout if the request succeeds
+
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
